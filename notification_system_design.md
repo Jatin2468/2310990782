@@ -83,7 +83,7 @@ Create a **composite index**:
 CREATE INDEX idx_notifications
 ON notifications(studentID, isRead, createdAt);
 
-✔ This helps:
+# This helps:
 
 * Fast filtering (studentID, isRead)
 * Faster sorting (createdAt)
@@ -114,3 +114,62 @@ AND createdAt >= NOW() - INTERVAL 7 DAY;
 
 * Archive old data
 * Use caching (Redis)
+
+# Stage 4 - Performance Optimization
+
+# 1. Problem
+
+* Notifications are fetched on every page
+* Database is overloaded
+* Slow response time for the users
+
+# 2. Solutions
+
+# 1. Caching (Redis)
+
+* Store user notifications in Redis
+* On request:
+
+  * First check cache
+  * If not present then fetch from DB then store in cache.
+
+Faster response will generate
+
+# 2. Pagination
+
+Instead of fetching all notifications:
+
+SELECT * FROM notifications
+WHERE studentID = 1042
+ORDER BY createdAt DESC
+LIMIT 10 OFFSET 0;
+
+Reduces DB load
+User needs multiple requests
+
+# 3. Infinite Scroll
+
+* Load notifications in chunks (10–20 at a time)
+* Load more when user scrolls
+
+Better UX
+Slight frontend complexity
+
+# 4. WebSockets (Real-Time)
+
+* Push only new notifications
+* Avoid fetching again and again
+
+Real-time updates
+
+# 5. Database Indexing
+
+* Index on (studentID, createdAt)
+
+
+# 6. Archiving Old Data
+
+* Move old notifications to archive table
+
+* Keeps main table small
+* Extra complexity
