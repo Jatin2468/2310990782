@@ -1,6 +1,6 @@
 # Stage 2 - Database Design
 
-# I am using MongoDB because it is flexible and structural for large databases.
+# I am using MongoDB because it is flexible and structural for large notification data
 
 1.
 Collection: notifications
