@@ -166,10 +166,93 @@ Real-time updates
 
 * Index on (studentID, createdAt)
 
-
 # 6. Archiving Old Data
 
 * Move old notifications to archive table
 
 * Keeps main table small
 * Extra complexity
+
+# Stage 5 - Scalable Notification Processing
+
+# 1. Problems in Given Implementation
+
+* Sequential processing (slow for 50,000 users)
+* If email fails → process stops
+* No fault tolerance
+* Not scalable
+
+# 2. Issue Observed
+
+* Email failed for 200 students
+* No retry mechanism so that notifications lost
+
+# 3. Improved Design
+
+Use **Queue-based architecture (Message Queue)**
+
+Flow:
+
+1. HR triggers "Notify All"
+2. Messages pushed to Queue (Kafka / RabbitMQ)
+3. Workers consume messages
+4. Each service handles separately:
+
+   * Email Service
+   * DB Service
+   * Push Notification Service
+
+# 4. Why this is better
+
+* Parallel processing (fast)
+* Retry mechanism possible
+* Failure of one service does not affect others
+* Scalable (add more workers)
+
+# 5. Should DB save and Email send happen together?
+No
+
+Reason:
+* Email API may fail or be slow
+* DB should be fast and reliable
+
+Save to DB first
+Then process email asynchronously
+
+# 6. Revised Pseudocode
+
+function notify_all(student_ids, message):
+
+```
+for student_id in student_ids:
+    push_to_queue({
+        "student_id": student_id,
+        "message": message
+    })
+```
+
+---
+
+### Worker Process
+
+function worker():
+
+```
+while true:
+    job = get_from_queue()
+
+    try:
+        save_to_db(job.student_id, job.message)
+
+        send_email(job.student_id, job.message)
+
+        push_to_app(job.student_id, job.message)
+
+    except:
+        retry(job)
+```
+
+# 7. Additional Improvements
+
+* Rate limiting (avoid overload)
+* Logging & monitoring
